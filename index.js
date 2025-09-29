@@ -12,7 +12,11 @@ dotenv.config()
 
 const app = express()
 
-// multer middleware
+// File type and size validation
+const allowedVideoTypes = ['video/mp4', 'video/avi', 'video/mkv', 'video/quicktime']  // Add more allowed types if needed
+const maxFileSize = 1073741824;  // 1 GB
+
+// multer middleware with validation
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         // Use environment variable for the upload path
@@ -23,8 +27,19 @@ const storage = multer.diskStorage({
     }
 })
 
-// Multi config for file upload
-const upload = multer({ storage })
+const fileFilter = (req, file, cb) => {
+    // Validate file type
+    if (!allowedVideoTypes.includes(file.mimetype)) {
+        return cb(new Error("Invalid file type. Only .mp4, .avi, .mkv, and .mov are allowed."), false)
+    }
+    cb(null, true)
+}
+
+const upload = multer({
+    storage,
+    fileFilter,  // File type validation
+    limits: { fileSize: maxFileSize }  // File size validation
+})
 
 // CORS configuration from .env
 app.use(cors({
@@ -42,6 +57,7 @@ app.get("/", (req, res) => {
     res.json({ message: "Hello" })
 })
 
+// Upload endpoint
 app.post("/upload", upload.single('file'), (req, res) => {
     console.log('File uploaded')
 
@@ -79,6 +95,19 @@ app.post("/upload", upload.single('file'), (req, res) => {
             lessonId: lessonId
         })
     })
+})
+
+// Error handling middleware for Multer validation errors
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        // Multer specific errors
+        return res.status(400).json({ message: err.message });
+    }
+    if (err) {
+        // General errors (e.g., file type or size)
+        return res.status(400).json({ message: err.message });
+    }
+    next();
 })
 
 app.listen(process.env.PORT || 8000, () => {
