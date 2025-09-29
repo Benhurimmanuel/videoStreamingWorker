@@ -1,84 +1,134 @@
-# \# Video Upload and HLS Conversion API
+# Video Upload and HLS Conversion API
 
-# 
+This Express-based server application allows users to upload video files. Upon successful upload, the video is converted to HLS (HTTP Live Streaming) format using `ffmpeg`. The application then provides a URL for the HLS stream, which can be embedded for playback.
 
-# This is an Express-based server application that allows users to upload video files. Upon successful upload, the video is converted to HLS (HTTP Live Streaming) format using `ffmpeg`, and a URL for the HLS stream is returned.
+## Features
 
-# 
+- **File Upload**: Supports video file uploads with validation.
+- **Video Conversion**: Converts videos to HLS format using `ffmpeg`.
+- **Video Streaming**: Provides a playable HLS stream via a `.m3u8` playlist and `.ts` video segments.
+- **Static File Serving**: Serves the uploaded video files as static assets.
 
-# \## Features
+---
 
-# 
+## Table of Contents
 
-# \- \*\*File Upload\*\*: Supports file uploads with validation.
+- [Getting Started](#getting-started)
+- [API Endpoints](#api-endpoints)
+- [File Upload Validation](#file-upload-validation)
+- [Production Setup](#production-setup)
+- [To-Do](#to-do)
+- [Contributing](#contributing)
+- [License](#license)
 
-# \- \*\*Video Conversion\*\*: Converts videos to HLS format using `ffmpeg`.
+---
 
-# \- \*\*Video Streaming\*\*: Provides a playable HLS stream via a `.m3u8` playlist.
+## Getting Started
 
-# \- \*\*Static File Serving\*\*: Serves the uploaded video files as static assets.
+### Prerequisites
 
-# 
+Ensure you have the following installed:
 
-# ---
+- [Node.js](https://nodejs.org/) (LTS recommended)
+- [ffmpeg](https://ffmpeg.org/download.html) (for video conversion)
+- A code editor (e.g., [VS Code](https://code.visualstudio.com/))
 
-# 
+### Installation
 
-# \## Table of Contents
+1. **Clone the repository**:
 
-# 
+   ```bash
+   git clone https://github.com/yourusername/your-repository-name.git
+   cd your-repository-name
+Install dependencies:
 
-# \- \[Getting Started](#getting-started)
+bash
+Copy code
+npm install
+Set up environment variables:
 
-# \- \[API Endpoints](#api-endpoints)
+Create a .env file in the root of your project and add the following configuration:
 
-# \- \[File Upload Validation](#file-upload-validation)
+ini
+Copy code
+PORT=8000
+UPLOAD_DIR=./uploads
+ALLOWED_ORIGIN=http://localhost:8000
+Run the application:
 
-# \- \[Production Setup](#production-setup)
+bash
+Copy code
+npm start
+The server will start on port 8000 (or any port defined in the .env file).
 
-# \- \[To-Do](#to-do)
+API Endpoints
+1. POST /upload
+This endpoint allows you to upload a video file, which will then be converted to HLS format.
 
-# \- \[Contributing](#contributing)
+Request Body:
 
-# \- \[License](#license)
+file: The video file to upload (multipart form-data).
 
-# 
+Response:
 
-# ---
+json
+Copy code
+{
+  "message": "Video converted to HLS format",
+  "videoUrl": "http://localhost:8000/uploads/courses/{lessonId}/index.m3u8",
+  "lessonId": "{lessonId}"
+}
+Error Responses:
 
-# 
+400: Bad request (e.g., invalid file type or size).
 
-# \## Getting Started
+500: Internal server error.
 
-# 
+File Upload Validation
+The server validates uploaded video files by checking the MIME type and extension. Only the following formats are allowed:
 
-# \### Prerequisites
+.mp4
 
-# 
+.mov
 
-# Ensure you have the following installed:
+.avi
 
-# 
+.mkv
 
-# \- \[Node.js](https://nodejs.org/) (LTS recommended)
+Additionally, the file size is limited to a maximum size of 1GB (configurable via the .env file).
 
-# \- \[ffmpeg](https://ffmpeg.org/download.html) (for video conversion)
+Production Setup
+To deploy this application in a production environment, consider the following:
 
-# \- A code editor (e.g., \[VS Code](https://code.visualstudio.com/))
+1. Dockerize the Application
+To easily deploy your app, you can create a Dockerfile:
 
-# 
+dockerfile
+Copy code
+# Use the official Node.js runtime as a parent image
+FROM node:16
 
-# \### Installation
+# Set the working directory inside the container
+WORKDIR /usr/src/app
 
-# 
+# Copy package.json and install dependencies
+COPY package*.json ./
+RUN npm install
 
-# 1\. \*\*Clone the repository:\*\*
+# Copy the rest of the application code
+COPY . .
 
-# &nbsp;  ```bash
+# Expose the port the app will run on
+EXPOSE 8000
 
-# &nbsp;  git clone https://github.com/yourusername/your-repository-name.git
+# Command to run the app
+CMD ["npm", "start"]
+2. Background Video Conversion
+Consider using a background job queue to process video conversion tasks asynchronously (e.g., using Bull).
 
-# &nbsp;  cd your-repository-name
+3. Log Management
+Integrate a logging solution (e.g., Winston or Morgan) to provide structured logging in production.
 
-# 
+4. Cloud Storage for Videos
+In a production environment, you might want to store video files in cloud storage (e.g., Amazon S3, Google Cloud Storage) for better scalability and availability.
 
